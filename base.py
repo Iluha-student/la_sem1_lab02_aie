@@ -9,7 +9,7 @@ class Matrix(ABC):
     @abstractmethod
     def to_dense(self) -> DenseMatrix:
         """Преобразует разреженную матрицу в плотную."""
-        pass
+        raise NotImplementedError
 
     def __add__(self, other: 'Matrix') -> 'Matrix':
         """Сложение матриц."""
@@ -20,7 +20,7 @@ class Matrix(ABC):
     @abstractmethod
     def _add_impl(self, other: 'Matrix') -> 'Matrix':
         """Реализация сложения с другой матрицей."""
-        pass
+        raise NotImplementedError
 
     def __mul__(self, scalar: float) -> 'Matrix':
         """Умножение на скаляр."""
@@ -29,7 +29,7 @@ class Matrix(ABC):
     @abstractmethod
     def _mul_impl(self, scalar: float) -> 'Matrix':
         """Реализация умножения на скаляр."""
-        pass
+        raise NotImplementedError
 
     def __rmul__(self, scalar: float) -> 'Matrix':
         """Обратное умножение на скаляр."""
@@ -38,7 +38,7 @@ class Matrix(ABC):
     @abstractmethod
     def transpose(self) -> 'Matrix':
         """Транспонирование матрицы."""
-        pass
+        raise NotImplementedError
 
     def __matmul__(self, other: 'Matrix') -> 'Matrix':
         """Умножение матриц."""
@@ -49,4 +49,4 @@ class Matrix(ABC):
     @abstractmethod
     def _matmul_impl(self, other: 'Matrix') -> 'Matrix':
         """Реализация умножения матриц."""
-        pass
+        raise NotImplementedError
