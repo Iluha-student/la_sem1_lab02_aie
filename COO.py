@@ -2,21 +2,30 @@ from base import Matrix
 from types import COOData, COORows, COOCols, Shape, DenseMatrix
 from typing import List, Tuple
 
+from CSR import CSRMatrix
+from CSC import CSCMatrix
+
 class COOMatrix(Matrix):
     def __init__(self, data: COOData, row: COORows, col: COOCols, shape: Shape):
         super().__init__(shape)
+
+        # Проверяю, что все списки одинаковой длины
         if not (len(data) == len(row) == len(col)):
             raise ValueError("количество значений в строках и столбцах должно совпадать")
-        self.data = data
-        self.row = row
-        self.col = col
+        
+        self.data = data[:]  # Копируем списки
+        self.row = row[:]
+        self.col = col[:]
 
     def to_dense(self) -> DenseMatrix:
         """Преобразует COO в плотную матрицу."""
         rows, cols = self.shape
         dense = [[0.0] * cols for _ in range(rows)]
+
+        # Прохожу по всем ненулевым элементам и ставлю их на место
         for val, i, j in zip(self.data, self.row, self.col):
-            dense[i][j] = val
+            dense[i][j] = val # Перезапись при совпадении
+
         return dense
         
 
@@ -69,6 +78,7 @@ class COOMatrix(Matrix):
     def transpose(self) -> 'Matrix':
         """Транспонирование COO матрицы."""
         a,b = self.shape
+        # Меняю shape и подменяем списки координат
         return COOMatrix(self.data.copy(), self.col.copy(), self.row.copy(), (a,b))
 
     def _matmul_impl(self, other: 'Matrix') -> 'Matrix':
@@ -130,8 +140,6 @@ class COOMatrix(Matrix):
         """
         Преобразование COOMatrix в CSCMatrix.
         """
-        from CSC import CSCMatrix
-
         # Сортируем ненулевые элементы по строкам, затем по столбцам
         sorted_indices = sorted(zip(self.col, self.row, self.data))
         sorted_cols, sorted_rows, sorted_data = zip(*sorted_indices) if sorted_indices else ([], [], [])
@@ -139,6 +147,7 @@ class COOMatrix(Matrix):
         data = list(sorted_data)
         indices = list(sorted_rows)
 
+        # Строю indptr по столбцам
         indptr = [0]
         current_col = -1
         for i, col in enumerate(sorted_cols):
@@ -155,18 +164,18 @@ class COOMatrix(Matrix):
         """
         from CSR import CSRMatrix
         m, n = self.shape
-        
+
+         # Сортирую тройки: сначала по строкам, затем столбцам
         triples: List[Tuple[int, int, float]] = list(zip(self.row, self.col, self.data))
         triples.sort()
 
-        data: List[float] = []
-        indices: List[int] = []
-        indptr: List[int] = [0] * (m + 1)
+        data: List[float] = [v for _, _, v in triples]
+        indices: List[int] = [c for _, c, _ in triples]  # В CSR indices = столбцы в строке
 
-        for r, c, v in triples:
-            data.append(v)
-            indices.append(c)
-        
+        # Строю indptr по количеству элементов в каждой строке
+        indptr: List[int] = [0] * (m + 1)
         for i in range(1, m + 1):
+            # Считаю элементы в строке i-1
             indptr[i] = indptr[i - 1] + sum(1 for r, _, _ in triples if r == i - 1)
+        
         return CSRMatrix(data, indices, indptr, (m, n))

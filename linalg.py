@@ -9,6 +9,7 @@ def lu_decomposition(A: CSCMatrix) -> Optional[Tuple[CSCMatrix, CSCMatrix]]:
     Возвращает (L, U) - нижнюю и верхнюю треугольные матрицы.
     Ожидается, что матрица L хранит единицы на главной диагонали.
     """
+    # Преобразуем CSC-матрицу в плотный формат
     dense_A = A.to_dense()
     n = len(dense_A)
 
@@ -24,8 +25,10 @@ def lu_decomposition(A: CSCMatrix) -> Optional[Tuple[CSCMatrix, CSCMatrix]]:
 
         # Вычисление L
         for k in range(i, n):
+            # Проверка на вырожденную матрицу
             if U[i][i] == 0:
-                return None  # Матрица вырожденная
+                return None
+            
             sum_l = sum(L[k][j] * U[j][i] for j in range(i))
             L[k][i] = (dense_A[k][i] - sum_l) / U[i][i]
 
@@ -43,6 +46,7 @@ def solve_SLAE_lu(A: CSCMatrix, b: Vector) -> Optional[Vector]:
     """
     Решение СЛАУ Ax = b через LU-разложение.
     """
+    # Получаем LU-разложение матрицы A
     lu_result = lu_decomposition(A)
     if lu_result is None:
         return None
@@ -69,6 +73,7 @@ def find_det_with_lu(A: CSCMatrix) -> Optional[float]:
     Нахождение определителя через LU-разложение.
     det(A) = det(L) * det(U)
     """
+    # Получаю LU-разложение матрицы A
     lu_result = lu_decomposition(A)
     if lu_result is None:
         return None
