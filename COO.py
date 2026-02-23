@@ -1,9 +1,10 @@
 from base import Matrix
 from type import COOData, COORows, COOCols, Shape, DenseMatrix
-from typing import List, Tuple
+from typing import List, Tuple, TYPE_CHECKING
 
-from CSR import CSRMatrix
-from CSC import CSCMatrix
+if TYPE_CHECKING:
+    from CSR import CSRMatrix
+    from CSC import CSCMatrix
 
 class COOMatrix(Matrix):
     def __init__(self, data: COOData, row: COORows, col: COOCols, shape: Shape):

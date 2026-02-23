@@ -1,10 +1,9 @@
 from base import Matrix
-from type import CSRData, CSRIndices, CSRIndptr, Shape, DenseMatrix
+from type import CSRData, CSRIndices, CSRIndptr, Shape, DenseMatrix, TYPE_CHECKING
 
-
-
-from COO import COOMatrix
-from CSC import CSCMatrix
+if TYPE_CHECKING:
+    from COO import COOMatrix
+    from CSC import CSCMatrix
 
 
 class CSRMatrix(Matrix):

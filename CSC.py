@@ -1,9 +1,9 @@
 from base import Matrix
-from type import CSCData, CSCIndices, CSCIndptr, Shape, DenseMatrix
+from type import CSCData, CSCIndices, CSCIndptr, Shape, DenseMatrix, TYPE_CHECKING
 
-
-from COO import COOMatrix
-from CSR import CSRMatrix
+if TYPE_CHECKING:
+    from COO import COOMatrix
+    from CSR import CSRMatrix
 
 class CSCMatrix(Matrix):
     def __init__(self, data: CSCData, indices: CSCIndices, indptr: CSCIndptr, shape: Shape):
