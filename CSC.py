@@ -182,25 +182,28 @@ class CSCMatrix(Matrix):
         # Проверка на пустую матрицу
         if not dense_matrix or not dense_matrix[0]:
             return cls([], [], [0], (0, 0))
-        
+
         rows = len(dense_matrix)
         cols = len(dense_matrix[0])
 
+        # Использую списковые включения для быстрого создания данных и индексов
         data: CSCData = []
         indices: CSCIndices = []
-        col_counts: list[int] = [0] * cols
-
-        for j in range(cols):
-            col_count = 0
-            for i in range(rows):
-                if abs(dense_matrix[i][j]) > 1e-14:
-                    data.append(dense_matrix[i][j])
-                    indices.append(i)
-                    col_count += 1
-            col_counts[j] = col_count 
         indptr: CSCIndptr = [0] * (cols + 1)
+
+        # Один проход по всем столбцам для сбора данных и построения indptr
         for j in range(cols):
-            indptr[j + 1] = indptr[j] + col_counts[j]
+            start_idx = len(data)
+            for i in range(rows):
+                value = dense_matrix[i][j]
+                if abs(value) > 1e-14:
+                    data.append(value)
+                    indices.append(i)
+            indptr[j + 1] = len(data) - start_idx
+
+        for j in range(1, cols + 1):
+            indptr[j] += indptr[j - 1]
+
         return cls(data, indices, indptr, (rows, cols))
 
     def _to_csr(self) -> 'CSRMatrix':
