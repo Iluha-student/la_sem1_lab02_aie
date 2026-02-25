@@ -189,22 +189,18 @@ class CSCMatrix(Matrix):
          # Инициализирую списки для хранения ненулевых элементов, их индексов строк и счетчиков ненулевых элементов в каждом столбце
         data: CSCData = []
         indices: CSCIndices = []
-        col_counts: list[int] = [0] * cols
-
-        for j in range(cols):
-            for i in range(rows):
-                value = dense_matrix[i][j]
-                if value != 0:
-                    data.append(value)
-                    indices.append(i)
-                    col_counts[j] += 1
-        
-        # Список указателей на начало каждого столбца
         indptr: CSCIndptr = [0] * (cols + 1)
 
-        # Создание указателей на начало каждого столбца
         for j in range(cols):
-            indptr[j + 1] = indptr[j] + col_counts[j]
+            start_idx = len(data)
+            for i in range(rows):
+                value = dense_matrix[i][j]
+                if abs(value) > 1e-14:  # Использую проверку на ненулевое значение с учетом точности
+                    data.append(value)
+                    indices.append(i)
+            indptr[j + 1] = len(data) - start_idx
+        for j in range(cols):
+            indptr[j + 1] += indptr[j]
         
         return cls(data, indices, indptr, (rows, cols))
 
