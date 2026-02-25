@@ -45,7 +45,7 @@ class CSCMatrix(Matrix):
         if not isinstance(other, CSCMatrix):
             other = other._to_csc() # Привожу вторую матрицу к CSC
         
-        cols = self.shape
+        rows, cols = self.shape
         result_data: CSCData = []
         result_indices: CSCIndices = []
         result_indptr: CSCIndptr = [0] * (cols + 1)
@@ -241,7 +241,7 @@ class CSCMatrix(Matrix):
         """
         from COO import COOMatrix
 
-        cols = self.shape
+        rows, cols = self.shape
 
         data_list: list[float] = []
         row_indices: list[int] = []
