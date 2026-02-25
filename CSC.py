@@ -181,27 +181,21 @@ class CSCMatrix(Matrix):
         # Проверка на пустую матрицу
         if not dense_matrix or not dense_matrix[0]:
             return cls([], [], [0, 0], (0, 0))
-        
-        # Определяю размеры матрицы
         rows = len(dense_matrix)
         cols = len(dense_matrix[0])
-
-         # Инициализирую списки для хранения ненулевых элементов, их индексов строк и счетчиков ненулевых элементов в каждом столбце
         data: CSCData = []
         indices: CSCIndices = []
-        indptr: CSCIndptr = [0] * (cols + 1)
-
+        col_counts: list[int] = [0] * cols
         for j in range(cols):
-            start_idx = len(data)
             for i in range(rows):
                 value = dense_matrix[i][j]
-                if abs(value) > 1e-14:  # Использую проверку на ненулевое значение с учетом точности
+                if value != 0:
                     data.append(value)
                     indices.append(i)
-            indptr[j + 1] = len(data) - start_idx
+                    col_counts[j] += 1
+        indptr: CSCIndptr = [0] * (cols + 1)
         for j in range(cols):
-            indptr[j + 1] += indptr[j]
-        
+            indptr[j + 1] = indptr[j] + col_counts[j]
         return cls(data, indices, indptr, (rows, cols))
 
     def _to_csr(self) -> 'CSRMatrix':
