@@ -1,5 +1,5 @@
 from base import Matrix
-from type import CSRData, CSRIndices, CSRIndptr, Shape, DenseMatrix
+from type import CSRData, CSRIndices, CSRIndptr, Shape, DenseMatrix, List
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -216,7 +216,32 @@ class CSRMatrix(Matrix):
         """
         Преобразование CSRMatrix в CSCMatrix.
         """
-        return self.transpose()
+        from CSC import CSCMatrix
+        m, n = self.shape
+        col_counts: List[int] = [0] * n
+        for i in range(m):
+            for p in range(self.indptr[i], self.indptr[i + 1]):
+                col = self.indices[p]
+                col_counts[col] += 1
+        indptr: CSRIndptr = [0] * (n + 1)
+        for j in range(n):
+            indptr[j + 1] = indptr[j] + col_counts[j]
+        
+        data: List[float] = [0.0] * len(self.data)
+        indices: List[int] = [0] * len(self.indices)
+        current_pos = indptr.copy()
+        
+        for i in range(m):
+            row_start = self.indptr[i]
+            row_end = self.indptr[i + 1]
+            for p in range(row_start, row_end):
+                col = self.indices[p]
+                val = self.data[p]
+                pos = current_pos[col]
+                data[pos] = val
+                indices[pos] = i
+                current_pos[col] += 1
+        return CSCMatrix(data, indices, indptr, (m, n))
     
     def _to_coo(self) -> 'COOMatrix':
         """
