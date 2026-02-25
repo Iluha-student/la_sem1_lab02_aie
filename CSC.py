@@ -188,13 +188,14 @@ class CSCMatrix(Matrix):
         indices = []
         indptr = [0]
 
-        col_count = [0] * cols
         # Прохожу по столбцам
         for j in range(cols):
+            col_count = 0
             for i in range(rows):
                 if abs(dense_matrix[i][j]) > 1e-14:  # Проверка на ненулевые элементы
                     data.append(dense_matrix[i][j])
                     indices.append(i)
+                    col_count += 1
             indptr.append(indptr[-1] + col_count)
 
         return cls(data, indices, indptr, (rows, cols))
