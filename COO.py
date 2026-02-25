@@ -145,27 +145,31 @@ class COOMatrix(Matrix):
         """
         from CSC import CSCMatrix
 
-        # Сортируем ненулевые элементы по строкам, затем по столбцам
-        sorted_indices = sorted(zip(self.col, self.row, self.data))
-        sorted_cols, sorted_rows, sorted_data = zip(*sorted_indices) if sorted_indices else ([], [], [])
-
-        data = list(sorted_data)
-        indices = list(sorted_rows)
-
-        # Строю indptr по столбцам
-        cols = self.shape[1]
+        rows, cols = self.shape
+    
+        # Группируем элементы ПО СТОЛБЦАМ
+        col_elements = [[] for _ in range(cols)]  # [(row, val), ...] для каждого столбца
+        
+        for val, i, j in zip(self.data, self.row, self.col):
+            if abs(val) > 1e-14:
+                col_elements[j].append((i, val))
+        
+        # Строим data, indices, indptr
+        data = []
+        indices = []
         indptr = [0]
-        current_col = -1
-
-        for i, col in enumerate(sorted_cols):
-            if col != current_col:
-                # Заполняем промежутки пустыми столбцами
-                while current_col + 1 < col:
-                    current_col += 1
-                    indptr.append(indptr[-1])
-                current_col = col
-                indptr.append(i)
-        indptr.append(len(data))
+        pos = 0
+        
+        for j in range(cols):
+            # Сортируем элементы столбца j ПО СТРОКАМ (обязательно!)
+            col_elements[j].sort(key=lambda x: x[0])
+            
+            for row_idx, val in col_elements[j]:
+                indices.append(row_idx)
+                data.append(val)
+                pos += 1
+            
+            indptr.append(pos)
 
         return CSCMatrix(data, indices, indptr, self.shape)
 
