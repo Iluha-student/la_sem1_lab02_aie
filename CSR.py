@@ -118,19 +118,26 @@ class CSRMatrix(Matrix):
         Результат - в CSC формате (с теми же данными, но с интерпретацией столбцов как строк).
         """
         from CSC import CSCMatrix
+
         m, n = self.shape
-        new_rows, new_cols = n, m
-        col_counts: list[int] = [0] * new_cols
+        new_rows, new_cols = n, m # Размеры транспонированной матрицы
+        
+        col_counts: list[int] = [0] * new_cols  # Подсчет ненулевых элементов в каждом столбце исходной матрицы
         for i in range(m):
             start = self.indptr[i]
             end = self.indptr[i + 1]
             col_counts[i] = end - start
+        
+        # Создание указателей на начало строк в транспонированной матрице
         new_indptr: CSRIndptr = [0] * (new_cols + 1)
         for j in range(new_cols):
             new_indptr[j + 1] = new_indptr[j] + col_counts[j]
-        new_data: CSRData = [0.0] * len(self.data)
-        new_indices: CSRIndices = [0] * len(self.indices)
-        col_positions = new_indptr.copy()
+        
+        new_data: CSRData = [0.0] * len(self.data) # Массив для данных транспонированной матрицы
+        new_indices: CSRIndices = [0] * len(self.indices) # Массив для индексов транспонированной матрицы
+        col_positions = new_indptr.copy() # Копия указателя для отслеживания текущей позиции в каждой строке
+
+        # Заполненяю данные и индексы транспонированной матрицы
         for i in range(m):
             start = self.indptr[i]
             end = self.indptr[i + 1]
@@ -141,6 +148,7 @@ class CSRMatrix(Matrix):
                 new_data[pos] = val
                 new_indices[pos] = j
                 col_positions[i] += 1
+        
         return CSCMatrix(new_data, new_indices, new_indptr, (new_rows, new_cols))
 
 
@@ -217,30 +225,46 @@ class CSRMatrix(Matrix):
         Преобразование CSRMatrix в CSCMatrix.
         """
         from CSC import CSCMatrix
+
         m, n = self.shape
-        col_counts: List[int] = [0] * n
+
+        col_counts: List[int] = [0] * n # Массив для для подсчета количества ненулевых элементов в каждом столбце
+
+        # Подсчитываю количество ненулевых элементов в каждом столбце
         for i in range(m):
             for p in range(self.indptr[i], self.indptr[i + 1]):
                 col = self.indices[p]
                 col_counts[col] += 1
-        indptr: CSRIndptr = [0] * (n + 1)
+        
+        indptr: CSRIndptr = [0] * (n + 1) # Массив указателей на начало каждого столбца в CSC-формате
+
+        # Заполняю массив указателей
         for j in range(n):
             indptr[j + 1] = indptr[j] + col_counts[j]
         
-        data: List[float] = [0.0] * len(self.data)
-        indices: List[int] = [0] * len(self.indices)
-        current_pos = indptr.copy()
+        data: List[float] = [0.0] * len(self.data) # Массив для хранения данных строк
+        indices: List[int] = [0] * len(self.indices) # Массив для хранения индексов строк
+
+        current_pos = indptr.copy() # Отслеживаем позицию в ккаждом столбце
         
+        # Заполняю массивы данных и индексов строк
         for i in range(m):
-            row_start = self.indptr[i]
-            row_end = self.indptr[i + 1]
+            row_start = self.indptr[i] # Начало строки
+            row_end = self.indptr[i + 1] # Конец строки
+
             for p in range(row_start, row_end):
-                col = self.indices[p]
-                val = self.data[p]
+                col = self.indices[p] # Индекс столбца
+                val = self.data[p] # Значение элемента
+
+                # Определяю позицию в массиве данных для текущего столбца
                 pos = current_pos[col]
+
+                # Заполняю массивы данных и индексов
                 data[pos] = val
                 indices[pos] = i
+
                 current_pos[col] += 1
+        
         return CSCMatrix(data, indices, indptr, (m, n))
     
     def _to_coo(self) -> 'COOMatrix':

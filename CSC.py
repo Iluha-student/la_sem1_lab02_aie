@@ -178,26 +178,34 @@ class CSCMatrix(Matrix):
     @classmethod
     def from_dense(cls, dense_matrix: DenseMatrix) -> 'CSCMatrix':
         """Создание CSC из плотной матрицы."""
+        # Проверка на пустую матрицу
         if not dense_matrix or not dense_matrix[0]:
-            return cls([], [], [0], (0, 0))
-    
+            return cls([], [], [0, 0], (0, 0))
+        
+        # Определяю размеры матрицы
         rows = len(dense_matrix)
         cols = len(dense_matrix[0])
 
-        data = []
-        indices = []
-        indptr = [0]
+         # Инициализирую списки для хранения ненулевых элементов, их индексов строк и счетчиков ненулевых элементов в каждом столбце
+        data: CSCData = []
+        indices: CSCIndices = []
+        col_counts: list[int] = [0] * cols
 
-        # Прохожу по столбцам
         for j in range(cols):
-            col_count = 0
             for i in range(rows):
-                if abs(dense_matrix[i][j]) > 1e-14:  # Проверка на ненулевые элементы
-                    data.append(dense_matrix[i][j])
+                value = dense_matrix[i][j]
+                if value != 0:
+                    data.append(value)
                     indices.append(i)
-                    col_count += 1
-            indptr.append(indptr[-1] + col_count)
+                    col_counts[j] += 1
+        
+        # Список указателей на начало каждого столбца
+        indptr: CSCIndptr = [0] * (cols + 1)
 
+        # Создание указателей на начало каждого столбца
+        for j in range(cols):
+            indptr[j + 1] = indptr[j] + col_counts[j]
+        
         return cls(data, indices, indptr, (rows, cols))
 
     def _to_csr(self) -> 'CSRMatrix':

@@ -120,23 +120,28 @@ class COOMatrix(Matrix):
     @classmethod
     def from_dense(cls, dense_matrix: DenseMatrix) -> 'COOMatrix':
         """Создание COO из плотной матрицы."""
+        # Проверка на простую матрицу
         if not dense_matrix or not dense_matrix[0]:
             return cls([], [], [], (0, 0))
         
+        # Определение размеров матрицы
         m = len(dense_matrix)
         n = len(dense_matrix[0])
 
+        # Создаю списков для хранения ненулевых элементов
         data: COOData = []
         rows: COORows = []
         cols: COOCols = []
 
+        # Проход по всем элементам плотной матрицы
         for i, row_list in enumerate(dense_matrix):
             for j, value in enumerate(row_list):
-                if value != 0:
+                if value != 0: # Проверка на то что предмет не нулевой
                     data.append(value)
                     rows.append(i)
                     cols.append(j)
         
+        # Создание и возврат COO-матрицы
         return cls(data, rows, cols, (m, n))
 
     def _to_csc(self) -> 'CSCMatrix':
@@ -144,21 +149,28 @@ class COOMatrix(Matrix):
         Преобразование COOMatrix в CSCMatrix.
         """
         from CSC import CSCMatrix
-
+        # Размеры матрицы
         m, n = self.shape
         
+        # Списки троек (столбец, строка, значение) и их сортировка
         triples: List[Tuple[int, int, float]] = list(zip(self.col, self.row, self.data))
         triples.sort()
+
+        # Инициализация списков для хранения данных CSC-матрицы
         data: List[float] = []
         indices: List[int] = []
         indptr: List[int] = [0] * (n + 1)
+
+         # Заполнение списков данных и индексов
         for c, r, v in triples:
             data.append(v)
             indices.append(r)
-            indptr[c + 1] += 1
+            indptr[c + 1] += 1 # Счет количества элементов в каждом столбце
         
+        # Построение указателей на начало каждого столбца
         for j in range(n):
             indptr[j + 1] += indptr[j]
+
         return CSCMatrix(data, indices, indptr, (m, n))
 
     def _to_csr(self) -> 'CSRMatrix':
@@ -172,15 +184,18 @@ class COOMatrix(Matrix):
         triples: List[Tuple[int, int, float]] = list(zip(self.row, self.col, self.data))
         triples.sort()
 
+        # Инициализация списков для хранения данных CSR-матрицы
         data: List[float] = []
         indices: List[int] = []
         indptr: List[int] = [0] * (m + 1)
 
+        # Заполнение списков данных и индексов
         for r, c, v in triples:
             data.append(v)
             indices.append(c)
-            indptr[r + 1] += 1
+            indptr[r + 1] += 1 # Счет количества элементов в каждой строке
         
+        # Построение указателей на начало каждой строки
         for i in range(m):
             indptr[i + 1] += indptr[i]
         
