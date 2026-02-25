@@ -144,7 +144,7 @@ class COOMatrix(Matrix):
         Преобразование COOMatrix в CSCMatrix.
         """
         from CSC import CSCMatrix
-        
+
         m, n = self.shape
         
         triples: List[Tuple[int, int, float]] = list(zip(self.col, self.row, self.data))
@@ -172,13 +172,16 @@ class COOMatrix(Matrix):
         triples: List[Tuple[int, int, float]] = list(zip(self.row, self.col, self.data))
         triples.sort()
 
-        data: List[float] = [v for _, _, v in triples]
-        indices: List[int] = [c for _, c, _ in triples]  # В CSR indices = столбцы в строке
-
-        # Строю indptr по количеству элементов в каждой строке
+        data: List[float] = []
+        indices: List[int] = []
         indptr: List[int] = [0] * (m + 1)
-        for i in range(1, m + 1):
-            # Считаю элементы в строке i-1
-            indptr[i] = indptr[i - 1] + sum(1 for r, _, _ in triples if r == i - 1)
+
+        for r, c, v in triples:
+            data.append(v)
+            indices.append(c)
+            indptr[r + 1] += 1
+        
+        for i in range(m):
+            indptr[i + 1] += indptr[i]
         
         return CSRMatrix(data, indices, indptr, (m, n))
