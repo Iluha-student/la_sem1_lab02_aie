@@ -118,34 +118,30 @@ class CSRMatrix(Matrix):
         Результат - в CSC формате (с теми же данными, но с интерпретацией столбцов как строк).
         """
         from CSC import CSCMatrix
-
         m, n = self.shape
-        transposed_data = []
-        transposed_indices = []
-        transposed_indptr = [0] * (n + 1)
-
-        # Подсчет ненулевых элементов в каждом столбце
-        col_counts = [0] * n
+        new_rows, new_cols = n, m
+        col_counts: list[int] = [0] * new_cols
         for i in range(m):
-            for p in range(self.indptr[i], self.indptr[i + 1]):
-                j = self.indices[p]
-                col_counts[j] += 1
-
-        # Заполнение transposed_indptr
-        for j in range(n):
-            transposed_indptr[j + 1] = transposed_indptr[j] + col_counts[j]
-
-        # Заполнение временных массивов
-        next_pos = transposed_indptr.copy()
+            start = self.indptr[i]
+            end = self.indptr[i + 1]
+            col_counts[i] = end - start
+        new_indptr: CSRIndptr = [0] * (new_cols + 1)
+        for j in range(new_cols):
+            new_indptr[j + 1] = new_indptr[j] + col_counts[j]
+        new_data: CSRData = [0.0] * len(self.data)
+        new_indices: CSRIndices = [0] * len(self.indices)
+        col_positions = new_indptr.copy()
         for i in range(m):
-            for p in range(self.indptr[i], self.indptr[i + 1]):
-                j = self.indices[p]
-                pos = next_pos[j]
-                transposed_data.append(self.data[p])
-                transposed_indices.append(i)
-                next_pos[j] += 1
-
-        return CSCMatrix(transposed_data, transposed_indices, transposed_indptr, (n, m))
+            start = self.indptr[i]
+            end = self.indptr[i + 1]
+            for idx in range(start, end):
+                j = self.indices[idx]
+                val = self.data[idx]
+                pos = col_positions[i]
+                new_data[pos] = val
+                new_indices[pos] = j
+                col_positions[i] += 1
+        return CSCMatrix(new_data, new_indices, new_indptr, (new_rows, new_cols))
 
 
     def _matmul_impl(self, other: 'Matrix') -> 'Matrix':
