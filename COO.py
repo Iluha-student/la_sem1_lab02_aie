@@ -55,6 +55,8 @@ class COOMatrix(Matrix):
             else:
                 sum_dict[key] = val
         
+        sum_dict = {k: v for k, v in sum_dict.items() if abs(v) > 1e-14}
+        
         # Извлекаем данные из словаря
         new_data = []
         new_rows = []
@@ -142,7 +144,7 @@ class COOMatrix(Matrix):
         Преобразование COOMatrix в CSCMatrix.
         """
         from CSC import CSCMatrix
-        
+
         # Сортируем ненулевые элементы по строкам, затем по столбцам
         sorted_indices = sorted(zip(self.col, self.row, self.data))
         sorted_cols, sorted_rows, sorted_data = zip(*sorted_indices) if sorted_indices else ([], [], [])
@@ -151,10 +153,16 @@ class COOMatrix(Matrix):
         indices = list(sorted_rows)
 
         # Строю indptr по столбцам
+        cols = self.shape[1]
         indptr = [0]
         current_col = -1
+
         for i, col in enumerate(sorted_cols):
             if col != current_col:
+                # Заполняем промежутки пустыми столбцами
+                while current_col + 1 < col:
+                    current_col += 1
+                    indptr.append(indptr[-1])
                 current_col = col
                 indptr.append(i)
         indptr.append(len(data))
