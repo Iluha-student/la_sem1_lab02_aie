@@ -147,9 +147,10 @@ class COOMatrix(Matrix):
 
         if not self.data:
             return CSCMatrix([], [], [0], self.shape)
-        
+
         rows, cols = self.shape
 
+        # Сортируем ненулевые элементы по столбцам, затем по строкам
         sorted_indices = sorted(zip(self.col, self.row, self.data))
         if not sorted_indices:
             return CSCMatrix([], [], [0], self.shape)
@@ -161,20 +162,24 @@ class COOMatrix(Matrix):
 
         # Строим indptr по столбцам
         indptr = [0]
-        current_col = sorted_cols[0]
+        current_col = -1
 
         for idx, col in enumerate(sorted_cols):
             if col != current_col:
-                while current_col < col:
-                    current_col += 1
-                    indptr.append(indptr[-1])
+                current_col = col
                 indptr.append(idx)
-        while current_col < cols - 1:
-            current_col += 1
-            indptr.append(indptr[-1])
         indptr.append(len(data))
 
-        return CSCMatrix(data, indices, indptr, self.shape)
+        # Заполняем промежутки пустыми столбцами
+        full_indptr = [0] * (cols + 1)
+        current_col = -1
+        indptr_idx = 0
+        for col in range(cols):
+            if indptr_idx < len(indptr) - 1 and indptr[indptr_idx + 1] <= col:
+                indptr_idx += 1
+            full_indptr[col + 1] = indptr[indptr_idx]
+
+        return CSCMatrix(data, indices, full_indptr, self.shape)
 
     def _to_csr(self) -> 'CSRMatrix':
         """
