@@ -149,27 +149,25 @@ class COOMatrix(Matrix):
         Преобразование COOMatrix в CSCMatrix.
         """
         from CSC import CSCMatrix
-        # Размеры матрицы
+
         m, n = self.shape
-        
-        # Списки троек (столбец, строка, значение) и их сортировка
-        triples: List[Tuple[int, int, float]] = list(zip(self.col, self.row, self.data))
-        triples.sort()
 
-        # Инициализация списков для хранения данных CSC-матрицы
-        data: List[float] = []
-        indices: List[int] = []
-        indptr: List[int] = [0] * (n + 1)
+        # Сортируем тройки по столбцам, затем по строкам
+        triples = sorted(zip(self.col, self.row, self.data), key=lambda x: (x[0], x[1]))
 
-         # Заполнение списков данных и индексов
+        data = []
+        indices = []
+        indptr = [0] * (n + 1)
+
+        # Заполняем данные и индексы, одновременно подсчитывая количество элементов в каждом столбце
         for c, r, v in triples:
             data.append(v)
             indices.append(r)
-            indptr[c + 1] += 1 # Счет количества элементов в каждом столбце
-        
-        # Построение указателей на начало каждого столбца
-        for j in range(n):
-            indptr[j + 1] += indptr[j]
+            indptr[c + 1] += 1
+
+        # Преобразуем в префиксные суммы
+        for j in range(1, n + 1):
+            indptr[j] += indptr[j - 1]
 
         return CSCMatrix(data, indices, indptr, (m, n))
 
@@ -178,25 +176,24 @@ class COOMatrix(Matrix):
         Преобразование COOMatrix в CSRMatrix.
         """
         from CSR import CSRMatrix
+
         m, n = self.shape
 
-         # Сортирую тройки: сначала по строкам, затем столбцам
-        triples: List[Tuple[int, int, float]] = list(zip(self.row, self.col, self.data))
-        triples.sort()
+        # Сортируем тройки по строкам, затем по столбцам
+        triples = sorted(zip(self.row, self.col, self.data), key=lambda x: (x[0], x[1]))
 
-        # Инициализация списков для хранения данных CSR-матрицы
-        data: List[float] = []
-        indices: List[int] = []
-        indptr: List[int] = [0] * (m + 1)
+        data = []
+        indices = []
+        indptr = [0] * (m + 1)
 
-        # Заполнение списков данных и индексов
+        # Заполняем данные и индексы, одновременно подсчитывая количество элементов в каждой строке
         for r, c, v in triples:
             data.append(v)
             indices.append(c)
-            indptr[r + 1] += 1 # Счет количества элементов в каждой строке
-        
-        # Построение указателей на начало каждой строки
-        for i in range(m):
-            indptr[i + 1] += indptr[i]
-        
+            indptr[r + 1] += 1
+
+        # Преобразуем в префиксные суммы
+        for i in range(1, m + 1):
+            indptr[i] += indptr[i - 1]
+
         return CSRMatrix(data, indices, indptr, (m, n))
