@@ -158,43 +158,22 @@ class CSCMatrix(Matrix):
 
     def _matmul_impl(self, other: 'Matrix') -> 'Matrix':
         """Умножение CSC матриц."""
-        if not isinstance(other, CSRMatrix):
-            other = other._to_csr()
+        if not isinstance(other, CSCMatrix):
+            other = other._to_csc()
+
         if self.shape[1] != other.shape[0]:
-            raise ValueError("Размеры матриц не совпадают")
+            raise ValueError("Размеры матриц не совпадают для умножения")
 
-        m, n = self.shape
-        _, p = other.shape
+        # Преобразуем в CSR для удобства умножения
+        from CSR import CSRMatrix
+        self_csr = self._to_csr()
+        other_csr = other._to_csr()
 
-        result_data = []
-        result_indices = []
-        result_indptr = [0]
+        # Умножение CSR матриц
+        result_csr = self_csr._matmul_impl(other_csr)
 
-        other_nnz_per_row = [other.indptr[i+1] - other.indptr[i] for i in range(other.shape[0])]
-    
-        for i in range(m):
-            row_dict = {}
-            
-            # Строка i матрицы A
-            for k_pos in range(self.indptr[i], self.indptr[i + 1]):
-                k = self.indices[k_pos]
-                val_a = self.data[k_pos]
-                
-                # Столбец k матрицы B (теперь быстрее!)
-                for j_pos in range(other.indptr[k], other.indptr[k + 1]):
-                    j = other.indices[j_pos]
-                    val_b = other.data[j_pos]
-                    row_dict[j] = row_dict.get(j, 0.0) + val_a * val_b
-            
-            # Сортируем и фильтруем нули
-            for j in sorted(row_dict):
-                if abs(row_dict[j]) > 1e-14:
-                    result_data.append(row_dict[j])
-                    result_indices.append(j)
-            
-            result_indptr.append(len(result_data))
-        
-        return CSRMatrix(result_data, result_indices, result_indptr, (m, p))
+        # Преобразуем результат обратно в CSC
+        return result_csr._to_csc()
 
     @classmethod
     def from_dense(cls, dense_matrix: DenseMatrix) -> 'CSCMatrix':

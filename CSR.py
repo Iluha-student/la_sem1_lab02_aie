@@ -118,8 +118,13 @@ class CSRMatrix(Matrix):
         Результат - в CSC формате (с теми же данными, но с интерпретацией столбцов как строк).
         """
         from CSC import CSCMatrix
-        
+
         m, n = self.shape
+        total_nnz = len(self.data)
+
+        transposed_data = [0.0] * total_nnz
+        transposed_indices = [0] * total_nnz
+        transposed_indptr = [0] * (n + 1)
 
         # Подсчет ненулевых элементов в каждом столбце
         col_counts = [0] * n
@@ -127,24 +132,20 @@ class CSRMatrix(Matrix):
             for p in range(self.indptr[i], self.indptr[i + 1]):
                 j = self.indices[p]
                 col_counts[j] += 1
-        
-        transposed_data = [0.0] * total_nnz
-        transposed_indices = [0] * total_nnz
-        transposed_indptr = [0] * (n + 1)
 
         # Заполнение transposed_indptr
         for j in range(n):
             transposed_indptr[j + 1] = transposed_indptr[j] + col_counts[j]
 
         # Заполнение временных массивов
-        col_pos = transposed_indptr.copy()
+        next_pos = transposed_indptr.copy()
         for i in range(m):
             for p in range(self.indptr[i], self.indptr[i + 1]):
                 j = self.indices[p]
-                pos = col_pos[j]
+                pos = next_pos[j]
                 transposed_data[pos] = self.data[p]
                 transposed_indices[pos] = i
-                col_pos[j] += 1
+                next_pos[j] += 1
 
         return CSCMatrix(transposed_data, transposed_indices, transposed_indptr, (n, m))
 
