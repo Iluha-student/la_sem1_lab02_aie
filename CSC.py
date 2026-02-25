@@ -180,19 +180,23 @@ class CSCMatrix(Matrix):
         """Создание CSC из плотной матрицы."""
         # Проверка на пустую матрицу
         if not dense_matrix or not dense_matrix[0]:
-            return cls([], [], [0, 0], (0, 0))
+            return cls([], [], [0], (0, 0))
+        
         rows = len(dense_matrix)
         cols = len(dense_matrix[0])
+
         data: CSCData = []
         indices: CSCIndices = []
         col_counts: list[int] = [0] * cols
+
         for j in range(cols):
+            col_count = 0
             for i in range(rows):
-                value = dense_matrix[i][j]
-                if value != 0:
-                    data.append(value)
+                if abs(dense_matrix[i][j]) > 1e-14:
+                    data.append(dense_matrix[i][j])
                     indices.append(i)
-                    col_counts[j] += 1
+                    col_count += 1
+            col_counts[j] = col_count 
         indptr: CSCIndptr = [0] * (cols + 1)
         for j in range(cols):
             indptr[j + 1] = indptr[j] + col_counts[j]
