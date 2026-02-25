@@ -159,62 +159,22 @@ class CSCMatrix(Matrix):
     def _matmul_impl(self, other: 'Matrix') -> 'Matrix':
         """Умножение CSC матриц."""
         from CSC import CSCMatrix
-        
-        if self.shape[1] != other.shape[0]:
-            raise ValueError("Размеры матриц не совпадают")
-        
         if not isinstance(other, CSCMatrix):
             other = other._to_csc()
-        
-        rows, common = self.shape
-        _, cols = other.shape
-        
-        result_data = [0.0] * (len(self.data) * len(other.data) // common) 
-        result_indices = [0] * len(result_data)
-        result_indptr = [0] * (cols + 1)
-        
-        # Подсчитываем nnz по столбцам результата
-        col_nnz = [0] * cols
-        for j in range(cols):
-            for i in range(rows):
-                col_nnz[j] += 1 
-        
-        # Строим indptr
-        for j in range(cols):
-            result_indptr[j + 1] = result_indptr[j] + col_nnz[j]
-        
-        #  Вычисляем значения 
-        pos = 0
-        for j in range(cols):
-            col_start = result_indptr[j]
-            for i in range(rows):
-                sum_val = 0.0
-                
-                # A[i,:] × B[:,j]
-                # Проходим по столбцу j матрицы B
-                for k_pos in range(other.indptr[j], other.indptr[j + 1]):
-                    k = other.indices[k_pos]
-                    val_b = other.data[k_pos]
-                    
-                    # Ищем A[i,k] в столбце k
-                    for a_pos in range(self.indptr[k], self.indptr[k + 1]):
-                        if self.indices[a_pos] == i:
-                            sum_val += self.data[a_pos] * val_b
-                            break
-                
-                if abs(sum_val) > 1e-14:
-                    result_data[pos] = sum_val
-                    result_indices[pos] = i
-                    pos += 1
-            
-            # Обрезаем до реального nnz
-            result_indptr[j + 1] = pos
-        
-        # Обрезаем массивы
-        result_data = result_data[:pos]
-        result_indices = result_indices[:pos]
 
-        return CSCMatrix(result_data, result_indices, result_indptr, (rows, cols))
+        if self.shape[1] != other.shape[0]:
+            raise ValueError("Размеры матриц не совпадают для умножения")
+
+        # Преобразуем в CSR для удобства умножения
+        from CSR import CSRMatrix
+        self_csr = self._to_csr()
+        other_csr = other._to_csr()
+
+        # Умножение CSR матриц
+        result_csr = self_csr._matmul_impl(other_csr)
+
+        # Преобразуем результат обратно в CSC
+        return result_csr._to_csc()
 
     @classmethod
     def from_dense(cls, dense_matrix: DenseMatrix) -> 'CSCMatrix':
