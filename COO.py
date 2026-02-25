@@ -144,42 +144,22 @@ class COOMatrix(Matrix):
         Преобразование COOMatrix в CSCMatrix.
         """
         from CSC import CSCMatrix
-
-        if not self.data:
-            return CSCMatrix([], [], [0], self.shape)
-
-        rows, cols = self.shape
-
-        # Сортируем ненулевые элементы по столбцам, затем по строкам
-        sorted_indices = sorted(zip(self.col, self.row, self.data))
-        if not sorted_indices:
-            return CSCMatrix([], [], [0], self.shape)
-
-        sorted_cols, sorted_rows, sorted_data = zip(*sorted_indices)
-
-        data = list(sorted_data)
-        indices = list(sorted_rows)
-
-        # Строим indptr по столбцам
-        indptr = [0]
-        current_col = -1
-
-        for idx, col in enumerate(sorted_cols):
-            if col != current_col:
-                current_col = col
-                indptr.append(idx)
-        indptr.append(len(data))
-
-        # Заполняем промежутки пустыми столбцами
-        full_indptr = [0] * (cols + 1)
-        current_col = -1
-        indptr_idx = 0
-        for col in range(cols):
-            if indptr_idx < len(indptr) - 1 and indptr[indptr_idx + 1] <= col:
-                indptr_idx += 1
-            full_indptr[col + 1] = indptr[indptr_idx]
-
-        return CSCMatrix(data, indices, full_indptr, self.shape)
+        
+        m, n = self.shape
+        
+        triples: List[Tuple[int, int, float]] = list(zip(self.col, self.row, self.data))
+        triples.sort()
+        data: List[float] = []
+        indices: List[int] = []
+        indptr: List[int] = [0] * (n + 1)
+        for c, r, v in triples:
+            data.append(v)
+            indices.append(r)
+            indptr[c + 1] += 1
+        
+        for j in range(n):
+            indptr[j + 1] += indptr[j]
+        return CSCMatrix(data, indices, indptr, (m, n))
 
     def _to_csr(self) -> 'CSRMatrix':
         """
