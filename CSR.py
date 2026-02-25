@@ -128,7 +128,6 @@ class CSRMatrix(Matrix):
                 j = self.indices[p]
                 col_counts[j] += 1
         
-        total_nnz = sum(col_counts)
         transposed_data = [0.0] * total_nnz
         transposed_indices = [0] * total_nnz
         transposed_indptr = [0] * (n + 1)
@@ -139,16 +138,13 @@ class CSRMatrix(Matrix):
 
         # Заполнение временных массивов
         col_pos = transposed_indptr.copy()
-        nnz_count = 0
         for i in range(m):
             for p in range(self.indptr[i], self.indptr[i + 1]):
                 j = self.indices[p]
-                if 0 <= j < n:
-                    pos = col_pos[j]
-                    transposed_data[pos] = self.data[p]
-                    transposed_indices[pos] = i
-                    col_pos[j] += 1
-                    nnz_count += 1
+                pos = col_pos[j]
+                transposed_data[pos] = self.data[p]
+                transposed_indices[pos] = i
+                col_pos[j] += 1
 
         return CSCMatrix(transposed_data, transposed_indices, transposed_indptr, (n, m))
 

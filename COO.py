@@ -146,24 +146,21 @@ class COOMatrix(Matrix):
         from CSC import CSCMatrix
 
         rows, cols = self.shape
-    
         col_lists = [[] for _ in range(cols)]
-        for i, (val, row_idx, col_idx) in enumerate(zip(self.data, self.row, self.col)):
+    
+        for val, row_idx, col_idx in zip(self.data, self.row, self.col):
             if abs(val) > 1e-14 and 0 <= col_idx < cols:
                 col_lists[col_idx].append((row_idx, val))
         
-        data = []
-        indices = []
+        data, indices = [], []
         indptr = [0]
+        
         
         for j in range(cols):
             col_lists[j].sort(key=lambda x: x[0])
-            
-            start_pos = len(data)
             for row_idx, val in col_lists[j]:
                 indices.append(row_idx)
                 data.append(val)
-            
             indptr.append(len(data))
 
         return CSCMatrix(data, indices, indptr, self.shape)
