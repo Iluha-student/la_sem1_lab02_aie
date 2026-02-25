@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 class CSCMatrix(Matrix):
     def __init__(self, data: CSCData, indices: CSCIndices, indptr: CSCIndptr, shape: Shape):
         super().__init__(shape)
-        cols = shape  # Извлекаю количество строк и столбцов из shape
+        rows, cols = shape  # Извлекаю количество строк и столбцов из shape
 
         if len(indptr) != cols + 1:
             raise ValueError("Некорректная длина indptr")
@@ -178,6 +178,9 @@ class CSCMatrix(Matrix):
     @classmethod
     def from_dense(cls, dense_matrix: DenseMatrix) -> 'CSCMatrix':
         """Создание CSC из плотной матрицы."""
+        if not dense_matrix or not dense_matrix[0]:
+            return cls([], [], [0], (0, 0))
+    
         rows = len(dense_matrix)
         cols = len(dense_matrix[0])
 
@@ -185,13 +188,13 @@ class CSCMatrix(Matrix):
         indices = []
         indptr = [0]
 
+        col_count = [0] * cols
         # Прохожу по столбцам
         for j in range(cols):
             for i in range(rows):
                 if abs(dense_matrix[i][j]) > 1e-14:  # Проверка на ненулевые элементы
                     data.append(dense_matrix[i][j])
                     indices.append(i)
-                    col_count += 1
             indptr.append(indptr[-1] + col_count)
 
         return cls(data, indices, indptr, (rows, cols))

@@ -141,6 +141,8 @@ class COOMatrix(Matrix):
         """
         Преобразование COOMatrix в CSCMatrix.
         """
+        from CSC import CSCMatrix
+        
         # Сортируем ненулевые элементы по строкам, затем по столбцам
         sorted_indices = sorted(zip(self.col, self.row, self.data))
         sorted_cols, sorted_rows, sorted_data = zip(*sorted_indices) if sorted_indices else ([], [], [])
