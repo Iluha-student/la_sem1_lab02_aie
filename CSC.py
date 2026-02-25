@@ -158,14 +158,43 @@ class CSCMatrix(Matrix):
 
     def _matmul_impl(self, other: 'Matrix') -> 'Matrix':
         """Умножение CSC матриц."""
+        if not isinstance(other, CSRMatrix):
+            other = other._to_csr()
         if self.shape[1] != other.shape[0]:
-            raise ValueError("Размеры матриц не совпадают для умножения")
+            raise ValueError("Размеры матриц не совпадают")
 
-        self_coo = self._to_coo()
-        other_coo = other._to_coo()
-        result_coo = self_coo._matmul_impl(other_coo)
-        return result_coo._to_csc()
+        m, n = self.shape
+        _, p = other.shape
+
+        result_data = []
+        result_indices = []
+        result_indptr = [0]
+
+        other_nnz_per_row = [other.indptr[i+1] - other.indptr[i] for i in range(other.shape[0])]
+    
+        for i in range(m):
+            row_dict = {}
+            
+            # Строка i матрицы A
+            for k_pos in range(self.indptr[i], self.indptr[i + 1]):
+                k = self.indices[k_pos]
+                val_a = self.data[k_pos]
                 
+                # Столбец k матрицы B (теперь быстрее!)
+                for j_pos in range(other.indptr[k], other.indptr[k + 1]):
+                    j = other.indices[j_pos]
+                    val_b = other.data[j_pos]
+                    row_dict[j] = row_dict.get(j, 0.0) + val_a * val_b
+            
+            # Сортируем и фильтруем нули
+            for j in sorted(row_dict):
+                if abs(row_dict[j]) > 1e-14:
+                    result_data.append(row_dict[j])
+                    result_indices.append(j)
+            
+            result_indptr.append(len(result_data))
+        
+        return CSRMatrix(result_data, result_indices, result_indptr, (m, p))
 
     @classmethod
     def from_dense(cls, dense_matrix: DenseMatrix) -> 'CSCMatrix':

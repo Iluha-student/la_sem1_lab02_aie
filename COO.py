@@ -147,28 +147,24 @@ class COOMatrix(Matrix):
 
         rows, cols = self.shape
     
-        # Группируем элементы ПО СТОЛБЦАМ
-        col_elements = [[] for _ in range(cols)]  # [(row, val), ...] для каждого столбца
+        col_lists = [[] for _ in range(cols)]
+        for i, (val, row_idx, col_idx) in enumerate(zip(self.data, self.row, self.col)):
+            if abs(val) > 1e-14 and 0 <= col_idx < cols:
+                col_lists[col_idx].append((row_idx, val))
         
-        for val, i, j in zip(self.data, self.row, self.col):
-            if 0 <= j < cols and abs(val) > 1e-14:
-                col_elements[j].append((i, val))
-        
-        # Строим data, indices, indptr
-        data, indices = [], []
+        data = []
+        indices = []
         indptr = [0]
-        pos = 0
         
         for j in range(cols):
-            # Сортируем элементы столбца j по строкам
-            col_elements[j].sort(key=lambda x: x[0])
+            col_lists[j].sort(key=lambda x: x[0])
             
-            for row_idx, val in col_elements[j]:
+            start_pos = len(data)
+            for row_idx, val in col_lists[j]:
                 indices.append(row_idx)
                 data.append(val)
-                pos += 1
             
-            indptr.append(pos)
+            indptr.append(len(data))
 
         return CSCMatrix(data, indices, indptr, self.shape)
 
