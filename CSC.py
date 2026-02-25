@@ -161,19 +161,11 @@ class CSCMatrix(Matrix):
         if self.shape[1] != other.shape[0]:
             raise ValueError("Размеры матриц не совпадают для умножения")
 
-        if not isinstance(other, CSCMatrix):
-            other = other._to_csc()
-
-        # Преобразую в CSR для удобства умножения
-        self_csr = self._to_csr()
-        other_csr = other._to_csr()
-
-        # Умножение CSR матриц
-        result_csr = self_csr._matmul_impl(other_csr)
-
-        # Преобразую результат обратно в CSC
-        return result_csr._to_csc()
-            
+        self_coo = self._to_coo()
+        other_coo = other._to_coo()
+        result_coo = self_coo._matmul_impl(other_coo)
+        return result_coo._to_csc()
+                
 
     @classmethod
     def from_dense(cls, dense_matrix: DenseMatrix) -> 'CSCMatrix':

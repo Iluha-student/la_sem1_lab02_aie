@@ -151,17 +151,16 @@ class COOMatrix(Matrix):
         col_elements = [[] for _ in range(cols)]  # [(row, val), ...] для каждого столбца
         
         for val, i, j in zip(self.data, self.row, self.col):
-            if abs(val) > 1e-14:
+            if 0 <= j < cols and abs(val) > 1e-14:
                 col_elements[j].append((i, val))
         
         # Строим data, indices, indptr
-        data = []
-        indices = []
+        data, indices = [], []
         indptr = [0]
         pos = 0
         
         for j in range(cols):
-            # Сортируем элементы столбца j ПО СТРОКАМ (обязательно!)
+            # Сортируем элементы столбца j по строкам
             col_elements[j].sort(key=lambda x: x[0])
             
             for row_idx, val in col_elements[j]:
