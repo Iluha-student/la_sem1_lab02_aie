@@ -158,41 +158,23 @@ class CSCMatrix(Matrix):
 
     def _matmul_impl(self, other: 'Matrix') -> 'Matrix':
         """Умножение CSC матриц."""
+        from CSC import CSCMatrix
         if not isinstance(other, CSCMatrix):
             other = other._to_csc()
-        rows_A, cols_A = self.shape
-        rows_B, cols_B = other.shape
-        result_data: CSCData = []
-        result_indices: CSCIndices = []
-        result_indptr: CSCIndptr = [0] * (cols_B + 1)
-        
-        row_entries_B: list[list[tuple[int, float]]] = [[] for _ in range(rows_B)]
-        for col in range(cols_B):
-            start = other.indptr[col]
-            end = other.indptr[col + 1]
-            for idx in range(start, end):
-                row = other.indices[idx]
-                val = other.data[idx]
-                row_entries_B[row].append((col, val))
-        temp_row: list[float] = [0.0] * rows_A
-        for j in range(cols_B):
-            for i in range(rows_A):
-                temp_row[i] = 0.0
-            for i in range(rows_B):
-                for col_b, val_b in row_entries_B[i]:
-                    if col_b == j:
-                        col_start = self.indptr[i]
-                        col_end = self.indptr[i + 1]
-                        for a_idx in range(col_start, col_end):
-                            row_a = self.indices[a_idx]
-                            val_a = self.data[a_idx]
-                            temp_row[row_a] += val_a * val_b
-            for i in range(rows_A):
-                if abs(temp_row[i]) > 1e-14:
-                    result_data.append(temp_row[i])
-                    result_indices.append(i)
-            result_indptr[j + 1] = len(result_data)
-        return CSCMatrix(result_data, result_indices, result_indptr, (rows_A, cols_B))
+
+        if self.shape[1] != other.shape[0]:
+            raise ValueError("Размеры матриц не совпадают для умножения")
+
+        # Преобразуем в CSR для удобства умножения
+        from CSR import CSRMatrix
+        self_csr = self._to_csr()
+        other_csr = other._to_csr()
+
+        # Умножение CSR матриц
+        result_csr = self_csr._matmul_impl(other_csr)
+
+        # Преобразуем результат обратно в CSC
+        return result_csr._to_csc()
 
     @classmethod
     def from_dense(cls, dense_matrix: DenseMatrix) -> 'CSCMatrix':
